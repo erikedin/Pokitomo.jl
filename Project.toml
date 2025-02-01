@@ -1,0 +1,4 @@
+name = "Pokitomo"
+uuid = "3d213fb4-725a-4cbb-8368-48b63fc984db"
+authors = ["Erik Edin <erikedin@users.noreply.github.com>"]
+version = "0.1.0"

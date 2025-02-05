@@ -43,6 +43,7 @@ block-beta
         Piece2Info["Piece 2 info"]
         ...
         PieceNInfo["Piece N info"]
+        PointerToPrev["Pointer to previous index"]
         IndexHash["Index SHA3-256 hash"]
         IndexSize["Index size: 4 bytes"]
     end
@@ -62,6 +63,7 @@ block-beta
         PiecePosition["Piece position"]
         PieceLength["Piece length"]
         PieceType["Piece type"]
+        PiecePath["Piece path"]
         PieceHash["Piece SHA3-256 hash"]
     end
 ```
@@ -117,7 +119,9 @@ block-beta
             PiecePosition["Piece 1 position"]
             PieceLength["Piece 1 length"]
             PieceType["Piece 1 type"]
+            PiecePath["Piece path"]
             PieceHash["Piece 1 SHA3-256 hash"]
+            PointerToPrev["Pointer to previous index"]
             IndexHash["Index SHA3-256 hash"]
             IndexSize["Index size: 4 bytes"]
         end

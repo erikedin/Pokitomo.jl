@@ -20,8 +20,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-module Pokitomo
+module Formats
 
-include("Formats/Formats.jl")
+struct PieceInfo
+    pieceposition::UInt32
+end
 
-end # module Pokitomo
+function PieceInfo(io::IO)
+    pieceposition = read(io, UInt32)
+    PieceInfo(pieceposition)
+end
+
+end # module Formats

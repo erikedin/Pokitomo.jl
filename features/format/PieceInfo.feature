@@ -20,11 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-@wip
 Feature: PieceInfo format
 
-    Scenario: Piece position is a 4 byte value
-        Given the contents
+    Scenario Outline: Piece position is a 4 byte value
+        Given the contents in hexadecimal
             """
             00 01 02 03     # Piece position
             04 05 06 07     # Piece length
@@ -34,4 +33,8 @@ Feature: PieceInfo format
             A7FFC6F8BF1ED76651C14756A061D662F580FF4DE43B49FA82D80A4B80F8434A # SHA3-256 hash
             """
          When reading a piece info
-         Then the piece position is 0x03020100
+         Then the <field> has value <value>
+
+      Examples:
+        | field          | value      |
+        | piece position | 03020100   |

@@ -20,8 +20,22 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-module Pokitomo
+using Behavior
+using Pokitomo
 
-include("Formats/Formats.jl")
+@when("reading a piece info") do context
+    data = context[:contents]
+    io = IOBuffer(data)
 
-end # module Pokitomo
+    pieceinfo = Pokitomo.Formats.PieceInfo(io)
+
+    context[:pieceinfo] = pieceinfo
+end
+
+@then("the piece position has value {String}") do context, hexvalue
+    pieceinfo = context[:pieceinfo]
+
+    expected = parse(UInt32, hexvalue; base=16)
+
+    @expect expected == pieceinfo.pieceposition
+end

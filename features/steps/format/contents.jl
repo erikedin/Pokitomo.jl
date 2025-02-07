@@ -20,8 +20,40 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-module Pokitomo
+using Behavior
 
-include("Formats/Formats.jl")
+removecomment(s::AbstractString) = replace(s, r"#.*" => "")
+removewhitespace(s::AbstractString) = replace(s, r"\s" => "")
 
-end # module Pokitomo
+# Parse binary contents as hexadecimal values
+# Example:
+#    01 23 45 # Comment
+#    6789
+# should be the binary values
+#    0x01 0x23 0x45 0x67 0x89
+function parsecontents(s::String) :: Vector{UInt8}
+    # Step 0: Split the string into lines
+    lines = split(s, "\n")
+
+    # Step 1: Remove comments: strip everything following the first hash on each line
+    # '12 34 # Comment' => '12 34 '
+    #
+    # Step 2: Also remove whitespace
+    # '12 34 ' => '1234'
+    stripped = [(l |> removecomment |> removewhitespace)
+                for l in lines]
+
+    # Step 3: Concatenate all lines
+    hexadecimal = join(stripped)
+
+    # Step 4: Convert from hexadecimal
+    hex2bytes(hexadecimal)
+end
+
+@given("the contents in hexadecimal") do context
+    hexadecimal = context[:block_text]
+
+    bin = parsecontents(hexadecimal)
+
+    context[:contents] = bin
+end

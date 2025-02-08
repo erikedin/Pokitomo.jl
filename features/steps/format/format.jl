@@ -39,3 +39,41 @@ end
 
     @expect expected == pieceinfo.pieceposition
 end
+
+@then("the piece length has value {String}") do context, hexvalue
+    pieceinfo = context[:pieceinfo]
+
+    expected = parse(UInt32, hexvalue; base=16)
+
+    @expect expected == pieceinfo.piecelength
+end
+
+@then("the piece type has value {String}") do context, hexvalue
+    pieceinfo = context[:pieceinfo]
+
+    expected = parse(UInt8, hexvalue; base=16)
+
+    @expect expected == pieceinfo.piecetype
+end
+
+@then("the piece path length has value {String}") do context, hexvalue
+    pieceinfo = context[:pieceinfo]
+
+    expected = parse(UInt32, hexvalue; base=16)
+
+    @expect expected == pieceinfo.piecepathlength
+end
+
+@then("the piece path has value {String}") do context, expected
+    pieceinfo = context[:pieceinfo]
+
+    @expect expected == pieceinfo.piecepath
+end
+
+@then("the piece hash has value {String}") do context, hexvalues
+    pieceinfo = context[:pieceinfo]
+
+    hash = hex2bytes(hexvalues)
+
+    @expect hash == pieceinfo.piecehash
+end

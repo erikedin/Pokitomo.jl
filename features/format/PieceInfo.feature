@@ -22,7 +22,7 @@
 
 Feature: PieceInfo format
 
-    Scenario Outline: Piece position is a 4 byte value
+    Scenario Outline: Reading piece info fields
         Given the contents in hexadecimal
             """
             00 01 02 03     # Piece position
@@ -36,5 +36,10 @@ Feature: PieceInfo format
          Then the <field> has value <value>
 
       Examples:
-        | field          | value      |
-        | piece position | 03020100   |
+        | field               | value    |
+        | piece position      | 03020100 |
+        | piece length        | 07060504 |
+        | piece type          | 00       |
+        | piece path length   | 00000001 |
+        | piece path          | /        |
+        | piece hash          | A7FFC6F8BF1ED76651C14756A061D662F580FF4DE43B49FA82D80A4B80F8434A |

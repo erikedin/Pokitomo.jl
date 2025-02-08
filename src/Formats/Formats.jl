@@ -24,11 +24,29 @@ module Formats
 
 struct PieceInfo
     pieceposition::UInt32
+    piecelength::UInt32
+    piecetype::UInt8
+    piecepathlength::UInt32
+    piecepath::String
+    piecehash::Vector{UInt8}
 end
+
+function deserializestring(io::IO, n::Int) :: String
+    data = read(io, n)
+    newio = IOBuffer(data)
+    read(newio, String)
+end
+
+const SHA3_256_LENGTH = 32
 
 function PieceInfo(io::IO)
     pieceposition = read(io, UInt32)
-    PieceInfo(pieceposition)
+    piecelength = read(io, UInt32)
+    piecetype = read(io, UInt8)
+    piecepathlength = read(io, UInt32)
+    piecepath = deserializestring(io, convert(Int, piecepathlength))
+    piecehash = read(io, SHA3_256_LENGTH)
+    PieceInfo(pieceposition, piecelength, piecetype, piecepathlength, piecepath, piecehash)
 end
 
 end # module Formats

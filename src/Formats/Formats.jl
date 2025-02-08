@@ -114,4 +114,11 @@ function indexhash(index::Index) :: Vector{UInt8}
     SHA.sha3_256(hashinput)
 end
 
+function isvalid(index::Index) :: Bool
+    suppliedhash = index.indexhash
+    calculatedhash = indexhash(index)
+
+    suppliedhash == calculatedhash
+end
+
 end # module Formats

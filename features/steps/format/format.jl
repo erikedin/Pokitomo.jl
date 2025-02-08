@@ -105,3 +105,15 @@ end
     println("Input size: $(length(actualhashinput))")
     println("Index hash: $(hashstring)")
 end
+
+@then("the index is valid") do context
+    index = context[:object]
+
+    @expect Pokitomo.Formats.isvalid(index)
+end
+
+@then("the index is invalid") do context
+    index = context[:object]
+
+    @expect !Pokitomo.Formats.isvalid(index)
+end

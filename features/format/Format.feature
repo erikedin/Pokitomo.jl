@@ -83,6 +83,48 @@ Feature: PieceInfo format
             | piece path in piece info 1         | /        |
             | piece hash in piece info 1         | A7FFC6F8BF1ED76651C14756A061D662F580FF4DE43B49FA82D80A4B80F8434A |
 
+    Scenario: The index can be validated using the SHA3 hash
+        Given the contents in hexadecimal
+            """
+            # Piece info 1
+            00 01 02 03     # Piece position
+            04 05 06 07     # Piece length
+            00              # Piece type
+            01 00 00 00     # Piece path length
+            2F              # / (piece path)
+            A7FFC6F8BF1ED76651C14756A061D662F580FF4DE43B49FA82D80A4B80F8434A # SHA3-256 hash
+
+            # Index
+            01 00           # Number of pieces
+            00 00 00 80     # Pointer to previous index, the high bit indicates the root index
+            FB11D1A79C558AC16FFD59B748F6393F5681FF0905D5F5E81431A2AC85A9C457 # SHA3-256 hash
+            58 00 00 00     # Index size, including piece info 1 (46 + 42 = 88)
+            """
+          And that the buffer position is at the end
+         When reading an index
+         Then the index is valid
+
+    Scenario: The index can be found to be invalid
+        Given the contents in hexadecimal
+            """
+            # Piece info 1
+            00 01 02 03     # Piece position
+            04 05 06 07     # Piece length
+            00              # Piece type
+            01 00 00 00     # Piece path length
+            2F              # / (piece path)
+            A7FFC6F8BF1ED76651C14756A061D662F580FF4DE43B49FA82D80A4B80F8434A # SHA3-256 hash
+
+            # Index
+            01 00           # Number of pieces
+            00 00 00 80     # Pointer to previous index, the high bit indicates the root index
+            A7FFC6F8BF1ED76651C14756A061D662F580FF4DE43B49FA82D80A4B80F8434A # SHA3-256 hash (invalid)
+            58 00 00 00     # Index size, including piece info 1 (46 + 42 = 88)
+            """
+          And that the buffer position is at the end
+         When reading an index
+         Then the index is invalid
+
     @wip
     Scenario: Helper scenario to calculate the actual hash of an index
         Given the contents in hexadecimal

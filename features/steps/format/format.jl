@@ -47,7 +47,13 @@ formatfields = Dict{String, FieldVerification}(
     "piece hash"  => FieldVerification(pi -> pi.piecehash, BytesFromHex()),
     "index size" => FieldVerification(idx -> idx.indexsize, Hex(UInt32)),
     "index hash" => FieldVerification(idx -> idx.indexhash, BytesFromHex()),
-    "number of pieces" => FieldVerification(idx -> idx.numberpieces, Hex(UInt16))
+    "number of pieces" => FieldVerification(idx -> Pokitomo.Formats.numberofpieces(idx), Hex(UInt16)),
+    "piece position in piece info 1" => FieldVerification(index -> index.pieceinfos[1].pieceposition, Hex(UInt32)),
+    "piece length in piece info 1" => FieldVerification(index -> index.pieceinfos[1].piecelength, Hex(UInt32)),
+    "piece type in piece info 1" => FieldVerification(index -> index.pieceinfos[1].piecetype, Hex(UInt8)),
+    "piece path length in piece info 1" => FieldVerification(index -> index.pieceinfos[1].piecepathlength, Hex(UInt32)),
+    "piece path in piece info 1" => FieldVerification(index -> index.pieceinfos[1].piecepath, String),
+    "piece hash in piece info 1"  => FieldVerification(index -> index.pieceinfos[1].piecehash, BytesFromHex()),
 )
 
 @when("reading a piece info") do context

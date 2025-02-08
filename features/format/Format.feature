@@ -76,3 +76,9 @@ Feature: PieceInfo format
             | index size       | 00 00 00 58 |
             | number of pieces | 1           |
             | index hash       | A7FFC6F8BF1ED76651C14756A061D662F580FF4DE43B49FA82D80A4B80F8434A |
+            | piece position in piece info 1     | 03 02 01 00 |
+            | piece length in piece info 1       | 07060504 |
+            | piece type in piece info 1         | 00       |
+            | piece path length in piece info 1  | 00000001 |
+            | piece path in piece info 1         | /        |
+            | piece hash in piece info 1         | A7FFC6F8BF1ED76651C14756A061D662F580FF4DE43B49FA82D80A4B80F8434A |

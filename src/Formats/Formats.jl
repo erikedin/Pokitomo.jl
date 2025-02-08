@@ -50,7 +50,7 @@ function PieceInfo(io::IO)
 end
 
 struct Index
-    numberpieces::UInt16
+    pieceinfos::Vector{PieceInfo}
     pointertoprev::UInt32
     indexhash::Vector{UInt8}
     indexsize::UInt32
@@ -59,16 +59,28 @@ end
 const INDEX_POSTAMBLE_SIZE = sizeof(UInt16) + sizeof(UInt32) + SHA3_256_LENGTH + sizeof(UInt32)
 
 function Index(io::IO)
-    currentposition = position(io)
-    seek(io, currentposition - INDEX_POSTAMBLE_SIZE)
+    startposition = position(io)
+    seek(io, startposition - INDEX_POSTAMBLE_SIZE)
 
     numberpieces = read(io, UInt16)
     pointertoprev = read(io, UInt32)
     indexhash = read(io, SHA3_256_LENGTH)
     indexsize = read(io, UInt32)
-    Index(numberpieces, pointertoprev, indexhash, indexsize)
+
+    # Seek back to the beginning of the PieceInfo fields
+    seek(io, startposition - indexsize)
+
+    # Read `numberpieces` PieceInfo structs.
+    pieceinfos = PieceInfo[]
+    foreach(1:numberpieces) do _i
+        pieceinfo = PieceInfo(io)
+        push!(pieceinfos, pieceinfo)
+    end
+
+    Index(pieceinfos, pointertoprev, indexhash, indexsize)
 end
 
 isrootindex(index::Index) = true
+numberofpieces(index::Index) = length(index.pieceinfos)
 
 end # module Formats

@@ -44,6 +44,7 @@ block-beta
         ...
         PieceNInfo["Piece N info"]
         PointerToPrev["Pointer to previous index"]
+        NPieces["Number of pieces (2 bytes)"]
         IndexHash["Index SHA3-256 hash"]
         IndexSize["Index size: 4 bytes"]
     end

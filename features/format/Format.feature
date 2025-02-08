@@ -43,3 +43,36 @@ Feature: PieceInfo format
         | piece path length   | 00000001 |
         | piece path          | /        |
         | piece hash          | A7FFC6F8BF1ED76651C14756A061D662F580FF4DE43B49FA82D80A4B80F8434A |
+
+
+    Scenario Outline: Reading an index
+        The buffer position is expected to be after the end of the index.
+        That way, one can seek back 4 bytes and find the index size, from which we
+        can read the rest.
+
+        Given the contents in hexadecimal
+            """
+            # Piece info 1
+            00 01 02 03     # Piece position
+            04 05 06 07     # Piece length
+            00              # Piece type
+            01 00 00 00     # Piece path length
+            2F              # / (piece path)
+            A7FFC6F8BF1ED76651C14756A061D662F580FF4DE43B49FA82D80A4B80F8434A # SHA3-256 hash
+
+            # Index
+            01 00           # Number of pieces
+            00 00 00 80     # Pointer to previous index, the high bit indicates the root index
+            A7FFC6F8BF1ED76651C14756A061D662F580FF4DE43B49FA82D80A4B80F8434A # SHA3-256 hash (invalid)
+            58 00 00 00     # Index size, including piece info 1 (46 + 42 = 88)
+            """
+          And that the buffer position is at the end
+         When reading an index
+         Then the <field> has value <value>
+          And the index is a root index
+
+      Examples:
+            | field            | value       |
+            | index size       | 00 00 00 58 |
+            | number of pieces | 1           |
+            | index hash       | A7FFC6F8BF1ED76651C14756A061D662F580FF4DE43B49FA82D80A4B80F8434A |

@@ -55,5 +55,12 @@ end
 
     bin = parsecontents(hexadecimal)
 
-    context[:contents] = bin
+    io = IOBuffer(bin)
+    context[:io] = io
+end
+
+@given("that the buffer position is at the end") do context
+    io = context[:io]
+
+    seekend(io)
 end

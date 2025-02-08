@@ -23,57 +23,67 @@
 using Behavior
 using Pokitomo
 
+struct Hex
+    t::Type
+end
+
+struct BytesFromHex end
+
+readfield(h::Hex, s::String) = parse(h.t, replace(s, r"\s" => ""); base=16)
+readfield(::Type{String}, s::String) = s
+readfield(::BytesFromHex, s::String) = hex2bytes(s)
+
+struct FieldVerification
+    actualfield::Function
+    parser
+end
+
+formatfields = Dict{String, FieldVerification}(
+    "piece position" => FieldVerification(pi -> pi.pieceposition, Hex(UInt32)),
+    "piece length" => FieldVerification(pi -> pi.piecelength, Hex(UInt32)),
+    "piece type" => FieldVerification(pi -> pi.piecetype, Hex(UInt8)),
+    "piece path length" => FieldVerification(pi -> pi.piecepathlength, Hex(UInt32)),
+    "piece path" => FieldVerification(pi -> pi.piecepath, String),
+    "piece hash"  => FieldVerification(pi -> pi.piecehash, BytesFromHex()),
+    "index size" => FieldVerification(idx -> idx.indexsize, Hex(UInt32)),
+    "index hash" => FieldVerification(idx -> idx.indexhash, BytesFromHex()),
+    "number of pieces" => FieldVerification(idx -> idx.numberpieces, Hex(UInt16))
+)
+
 @when("reading a piece info") do context
-    data = context[:contents]
-    io = IOBuffer(data)
+    io = context[:io]
 
     pieceinfo = Pokitomo.Formats.PieceInfo(io)
 
-    context[:pieceinfo] = pieceinfo
+    context[:object] = pieceinfo
 end
 
-@then("the piece position has value {String}") do context, hexvalue
-    pieceinfo = context[:pieceinfo]
+@when("reading an index") do context
+    io = context[:io]
 
-    expected = parse(UInt32, hexvalue; base=16)
+    index = Pokitomo.Formats.Index(io)
 
-    @expect expected == pieceinfo.pieceposition
+    context[:object] = index
 end
 
-@then("the piece length has value {String}") do context, hexvalue
-    pieceinfo = context[:pieceinfo]
+@then("the {String} has value {String}") do context, fieldname, stringvalue
+    pieceinfo = context[:object]
 
-    expected = parse(UInt32, hexvalue; base=16)
+    # FieldVerification describes what field to fetch from the object,
+    # and how to interpret the stringvalue provided to this step.
+    fieldverification = formatfields[fieldname]
 
-    @expect expected == pieceinfo.piecelength
+    # Convert the stringvalue provided here to the expected type
+    expected = readfield(fieldverification.parser, stringvalue)
+
+    # Read the actual field from the object.
+    actual = fieldverification.actualfield(pieceinfo)
+
+    @expect expected == actual
 end
 
-@then("the piece type has value {String}") do context, hexvalue
-    pieceinfo = context[:pieceinfo]
+@then("the index is a root index") do context
+    index = context[:object]
 
-    expected = parse(UInt8, hexvalue; base=16)
-
-    @expect expected == pieceinfo.piecetype
-end
-
-@then("the piece path length has value {String}") do context, hexvalue
-    pieceinfo = context[:pieceinfo]
-
-    expected = parse(UInt32, hexvalue; base=16)
-
-    @expect expected == pieceinfo.piecepathlength
-end
-
-@then("the piece path has value {String}") do context, expected
-    pieceinfo = context[:pieceinfo]
-
-    @expect expected == pieceinfo.piecepath
-end
-
-@then("the piece hash has value {String}") do context, hexvalues
-    pieceinfo = context[:pieceinfo]
-
-    hash = hex2bytes(hexvalues)
-
-    @expect hash == pieceinfo.piecehash
+    @expect Pokitomo.Formats.isrootindex(index)
 end

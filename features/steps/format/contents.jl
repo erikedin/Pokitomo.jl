@@ -64,3 +64,15 @@ end
 
     seekend(io)
 end
+
+@then("the contents without the index hash is printed in Julia format") do context
+    io = context[:io]
+
+    bin = read(io)
+
+    beforehash = bin[1:end-4-32]
+    afterhash = bin[end-4+1:end]
+    wohash = vcat(beforehash, afterhash)
+
+    show(wohash)
+end

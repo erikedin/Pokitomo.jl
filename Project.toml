@@ -5,8 +5,10 @@ version = "0.1.0"
 
 [deps]
 Behavior = "7a129280-419d-58e9-81ef-4f6801251892"
+SHA = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
 Behavior = "0.4.0"
+SHA = "0.7.0"
 Test = "1.11.0"

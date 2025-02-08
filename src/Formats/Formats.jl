@@ -22,20 +22,18 @@
 
 module Formats
 
+using SHA
+
 struct PieceInfo
     pieceposition::UInt32
     piecelength::UInt32
     piecetype::UInt8
     piecepathlength::UInt32
-    piecepath::String
+    piecepath::Vector{UInt8}
     piecehash::Vector{UInt8}
 end
 
-function deserializestring(io::IO, n::Int) :: String
-    data = read(io, n)
-    newio = IOBuffer(data)
-    read(newio, String)
-end
+piecepath(p::PieceInfo) = String(p.piecepath)
 
 const SHA3_256_LENGTH = 32
 
@@ -44,7 +42,7 @@ function PieceInfo(io::IO)
     piecelength = read(io, UInt32)
     piecetype = read(io, UInt8)
     piecepathlength = read(io, UInt32)
-    piecepath = deserializestring(io, convert(Int, piecepathlength))
+    piecepath = read(io, piecepathlength)
     piecehash = read(io, SHA3_256_LENGTH)
     PieceInfo(pieceposition, piecelength, piecetype, piecepathlength, piecepath, piecehash)
 end
@@ -82,5 +80,38 @@ end
 
 isrootindex(index::Index) = true
 numberofpieces(index::Index) = length(index.pieceinfos)
+
+_r(v::T) where {T <: Unsigned} = reinterpret(NTuple{sizeof(T), UInt8}, v)
+
+function pieceinfohashinput(p::PieceInfo) :: Vector{UInt8}
+    UInt8[
+        _r(p.pieceposition)...,
+        _r(p.piecelength)...,
+        _r(p.piecetype)...,
+        _r(p.piecepathlength)...,
+        p.piecepath...,
+        p.piecehash...,
+    ]
+end
+
+function indexhashinput(index::Index) :: Vector{UInt8}
+    bin = UInt8[]
+    foreach(index.pieceinfos) do p
+        append!(bin, pieceinfohashinput(p))
+    end
+
+    # Convert numberofpieces to UInt16, which is its representation on disk
+    numberpieces = convert(UInt16, numberofpieces(index))
+    append!(bin, _r(numberpieces))
+    append!(bin, _r(index.pointertoprev))
+    append!(bin, _r(index.indexsize))
+
+    bin
+end
+
+function indexhash(index::Index) :: Vector{UInt8}
+    hashinput = indexhashinput(index)
+    SHA.sha3_256(hashinput)
+end
 
 end # module Formats

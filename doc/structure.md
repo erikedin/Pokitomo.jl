@@ -51,10 +51,12 @@ block-beta
 ```
 
 The index hash depends on:
-- Each piece hash
-- Each piece position
-- Each piece length
-- Each piece type
+- each piece hash
+- each piece position
+- each piece length
+- each piece type
+- the pointer to the previous index
+- the number of PieceInfos
 
 ## Piece info
 ```mermaid

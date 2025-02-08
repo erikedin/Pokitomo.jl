@@ -43,7 +43,7 @@ formatfields = Dict{String, FieldVerification}(
     "piece length" => FieldVerification(pi -> pi.piecelength, Hex(UInt32)),
     "piece type" => FieldVerification(pi -> pi.piecetype, Hex(UInt8)),
     "piece path length" => FieldVerification(pi -> pi.piecepathlength, Hex(UInt32)),
-    "piece path" => FieldVerification(pi -> pi.piecepath, String),
+    "piece path" => FieldVerification(pi -> Pokitomo.Formats.piecepath(pi), String),
     "piece hash"  => FieldVerification(pi -> pi.piecehash, BytesFromHex()),
     "index size" => FieldVerification(idx -> idx.indexsize, Hex(UInt32)),
     "index hash" => FieldVerification(idx -> idx.indexhash, BytesFromHex()),
@@ -52,7 +52,7 @@ formatfields = Dict{String, FieldVerification}(
     "piece length in piece info 1" => FieldVerification(index -> index.pieceinfos[1].piecelength, Hex(UInt32)),
     "piece type in piece info 1" => FieldVerification(index -> index.pieceinfos[1].piecetype, Hex(UInt8)),
     "piece path length in piece info 1" => FieldVerification(index -> index.pieceinfos[1].piecepathlength, Hex(UInt32)),
-    "piece path in piece info 1" => FieldVerification(index -> index.pieceinfos[1].piecepath, String),
+    "piece path in piece info 1" => FieldVerification(index -> Pokitomo.Formats.piecepath(index.pieceinfos[1]), String),
     "piece hash in piece info 1"  => FieldVerification(index -> index.pieceinfos[1].piecehash, BytesFromHex()),
 )
 
@@ -92,4 +92,16 @@ end
     index = context[:object]
 
     @expect Pokitomo.Formats.isrootindex(index)
+end
+
+@then("the actual index hash is printed") do context
+    index = context[:object]
+
+    actualhashinput = Pokitomo.Formats.indexhashinput(index)
+    actualhash = Pokitomo.Formats.indexhash(index)
+    hashstring = uppercase(bytes2hex(actualhash))
+
+    println("Hash input: $(actualhashinput)")
+    println("Input size: $(length(actualhashinput))")
+    println("Index hash: $(hashstring)")
 end

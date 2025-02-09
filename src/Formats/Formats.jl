@@ -24,6 +24,11 @@ module Formats
 
 using SHA
 
+struct Piece
+    data::Vector{UInt8}
+    path::String
+end
+
 struct PieceInfo
     pieceposition::UInt32
     piecelength::UInt32
@@ -37,6 +42,35 @@ piecepath(p::PieceInfo) = String(p.piecepath)
 
 const SHA3_256_LENGTH = 32
 
+function serializestring(path::String) :: Vector{UInt8}
+    io = IOBuffer()
+    write(io, path)
+    read(io)
+end
+
+function PieceInfo(p::Piece)
+    # TODO: Piece position is hard coded to zero for now.
+    # This will only work for a single piece at the start of the file.
+    pieceposition = UInt32(0)
+
+    piecelength = UInt32(length(p.data))
+
+    # TODO: Piece type is raw binary, the only supported type for now
+    piecetype = UInt8(0)
+
+    piecepathlength = UInt32(length(p.path))
+    piecepathbinary = serializestring(p.path)
+
+    piecehash = SHA.sha3_256(p.data)
+
+    PieceInfo(pieceposition,
+              piecelength,
+              piecetype,
+              piecepathlength,
+              piecepathbinary,
+              piecehash)
+end
+
 function PieceInfo(io::IO)
     pieceposition = read(io, UInt32)
     piecelength = read(io, UInt32)
@@ -47,6 +81,31 @@ function PieceInfo(io::IO)
     PieceInfo(pieceposition, piecelength, piecetype, piecepathlength, piecepath, piecehash)
 end
 
+function Base.write(io::IO, p::PieceInfo)
+    write(io, p.pieceposition)
+    write(io, p.piecelength)
+    write(io, p.piecetype)
+    write(io, p.piecepathlength)
+    write(io, p.piecepath)
+    write(io, p.piecehash)
+end
+
+function pieceinfosize(p::PieceInfo) :: UInt32
+    FIXED_PART = (
+        4 +     # Piece position
+        4 +     # Piece length
+        1 +     # Piece type
+        4 +     # Piece path length
+        32      # Piece hash
+    )
+
+    FIXED_PART + p.piecepathlength
+end
+
+function pieceinfossize(pieceinfos::Vector{PieceInfo}) :: UInt32
+    sum([pieceinfosize(p) for p in pieceinfos])
+end
+
 struct Index
     pieceinfos::Vector{PieceInfo}
     pointertoprev::UInt32
@@ -54,7 +113,21 @@ struct Index
     indexsize::UInt32
 end
 
+# This size is the fixed size part of the index. It is everything following the pieceinfos.
 const INDEX_POSTAMBLE_SIZE = sizeof(UInt16) + sizeof(UInt32) + SHA3_256_LENGTH + sizeof(UInt32)
+
+function Index(pieces::Vector{Piece})
+    pieceinfos = [PieceInfo(p) for p in pieces]
+
+    # TODO: Only root index for now
+    previndex = UInt32(0x80000000)
+
+    indexsize = UInt32(pieceinfossize(pieceinfos) + INDEX_POSTAMBLE_SIZE)
+
+    hash = indexhash(pieceinfos, previndex, indexsize)
+
+    Index(pieceinfos, previndex, hash, indexsize)
+end
 
 function Index(io::IO)
     startposition = position(io)
@@ -81,6 +154,16 @@ end
 isrootindex(index::Index) = true
 numberofpieces(index::Index) = length(index.pieceinfos)
 
+function Base.write(io::IO, index::Index)
+    foreach(index.pieceinfos) do p
+        write(io, p)
+    end
+    write(io, UInt32(numberofpieces(index)))
+    write(io, index.pointertoprev)
+    write(io, index.indexhash)
+    write(io, index.indexsize)
+end
+
 _r(v::T) where {T <: Unsigned} = reinterpret(NTuple{sizeof(T), UInt8}, v)
 
 function pieceinfohashinput(p::PieceInfo) :: Vector{UInt8}
@@ -94,23 +177,32 @@ function pieceinfohashinput(p::PieceInfo) :: Vector{UInt8}
     ]
 end
 
-function indexhashinput(index::Index) :: Vector{UInt8}
+function indexhashinput(pieceinfos::Vector{PieceInfo}, pointertoprev::UInt32, indexsize::UInt32) :: Vector{UInt8}
     bin = UInt8[]
-    foreach(index.pieceinfos) do p
+    foreach(pieceinfos) do p
         append!(bin, pieceinfohashinput(p))
     end
 
     # Convert numberofpieces to UInt16, which is its representation on disk
-    numberpieces = convert(UInt16, numberofpieces(index))
+    numberpieces = convert(UInt16, length(pieceinfos))
     append!(bin, _r(numberpieces))
-    append!(bin, _r(index.pointertoprev))
-    append!(bin, _r(index.indexsize))
+    append!(bin, _r(pointertoprev))
+    append!(bin, _r(indexsize))
 
     bin
 end
 
+function indexhashinput(index::Index) :: Vector{UInt8}
+    indexhashinput(index.pieceinfos, index.pointertoprev, index.indexsize)
+end
+
 function indexhash(index::Index) :: Vector{UInt8}
     hashinput = indexhashinput(index)
+    SHA.sha3_256(hashinput)
+end
+
+function indexhash(pieceinfos::Vector{PieceInfo}, pointertoprev::UInt32, indexsize::UInt32) :: Vector{UInt8}
+    hashinput = indexhashinput(pieceinfos, pointertoprev, indexsize)
     SHA.sha3_256(hashinput)
 end
 
@@ -119,6 +211,27 @@ function isvalid(index::Index) :: Bool
     calculatedhash = indexhash(index)
 
     suppliedhash == calculatedhash
+end
+
+#
+# Chunks
+#
+
+struct Chunk
+    pieces::Vector{Piece}
+    index::Index
+end
+
+function Chunk(pieces::Vector{Piece})
+    index = Index(pieces)
+    Chunk(pieces, index)
+end
+
+function Base.write(io::IO, chunk::Chunk)
+    foreach(chunk.pieces) do piece
+        write(io, piece.data)
+    end
+    write(io, chunk.index)
 end
 
 end # module Formats

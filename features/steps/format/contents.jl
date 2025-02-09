@@ -65,6 +65,14 @@ end
     seekend(io)
 end
 
+@given("a piece with hexadecimal contents at path \"{String}\"") do context, path
+    hexadecimal = context[:block_text]
+
+    bin = parsecontents(hexadecimal)
+
+    context[:piece] = Pokitomo.Formats.Piece(bin, path)
+end
+
 @then("the contents without the index hash is printed in Julia format") do context
     io = context[:io]
 
@@ -75,4 +83,16 @@ end
     wohash = vcat(beforehash, afterhash)
 
     show(wohash)
+end
+
+@then("the result in hexadecimal is") do context
+    hexadecimal = context[:block_text]
+    expectedbin = parsecontents(hexadecimal)
+
+    io = context[:io]
+    seekstart(io)
+
+    actual = read(io)
+
+    @expect actual == expectedbin
 end

@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-Feature: PieceInfo format
+Feature: Reading the format
 
     Scenario Outline: Reading piece info fields
         Given the contents in hexadecimal

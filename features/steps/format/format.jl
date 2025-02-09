@@ -72,6 +72,17 @@ end
     context[:object] = index
 end
 
+@when("writing a root chunk") do context
+    piece = context[:piece]
+
+    io = IOBuffer()
+
+    chunk = Pokitomo.Formats.Chunk([piece])
+    write(io, chunk)
+
+    context[:io] = io
+end
+
 @then("the {String} has value {String}") do context, fieldname, stringvalue
     pieceinfo = context[:object]
 

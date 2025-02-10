@@ -112,6 +112,7 @@ end
     actualhash = Pokitomo.Formats.indexhash(index)
     hashstring = uppercase(bytes2hex(actualhash))
 
+    println("Index: $(index)")
     println("Hash input: $(actualhashinput)")
     println("Input size: $(length(actualhashinput))")
     println("Index hash: $(hashstring)")

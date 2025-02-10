@@ -45,6 +45,7 @@ const SHA3_256_LENGTH = 32
 function serializestring(path::String) :: Vector{UInt8}
     io = IOBuffer()
     write(io, path)
+    seekstart(io)
     read(io)
 end
 
@@ -158,7 +159,7 @@ function Base.write(io::IO, index::Index)
     foreach(index.pieceinfos) do p
         write(io, p)
     end
-    write(io, UInt32(numberofpieces(index)))
+    write(io, UInt16(numberofpieces(index)))
     write(io, index.pointertoprev)
     write(io, index.indexhash)
     write(io, index.indexsize)

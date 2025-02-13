@@ -20,23 +20,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-module Pokitomo
+Feature: Read/write invariant
+    To ensure that reading and writing is consistent,
+    we write a large number of random files, read them back,
+    and compare them.
 
-include("Formats/Formats.jl")
+    Background: A random seed, for deterministic behavior
+        Given a PRNG seed 42
 
-export PokitomoFile
-
-using Pokitomo.Formats: Chunk
-
-struct PokitomoFile end
-
-function Base.read(io::IO, ::Type{PokitomoFile}, path::String)
-    # TODO: Implement more. For now, just read a single chunk.
-    seekend(io)
-    chunk = Chunk(io)
-    # TODO: Ignoring path for now, since there's only one piece possible.
-    piece = only(chunk.pieces)
-    piece.data
-end
-
-end # module Pokitomo
+    Scenario: Write a single random chunk to a file and read it back
+        Given 100 repetitions of this scenario
+          And a random piece of binary data
+         When a file is written with the binary data
+          And the file is read again
+         Then the read binary data matches what was written

@@ -40,6 +40,16 @@ end
 
 piecepath(p::PieceInfo) = String(p.piecepath)
 
+function Piece(io::IO, pieceinfo::PieceInfo)
+    position = pieceinfo.pieceposition
+    seek(io, position)
+
+    n = pieceinfo.piecelength
+    data = read(io, n)
+
+    Piece(data, piecepath(pieceinfo))
+end
+
 const SHA3_256_LENGTH = 32
 
 function serializestring(path::String) :: Vector{UInt8}
@@ -226,6 +236,15 @@ end
 function Chunk(pieces::Vector{Piece})
     index = Index(pieces)
     Chunk(pieces, index)
+end
+
+function Chunk(io::IO)
+    index = Index(io)
+    # TODO: Only read a single piece for now
+    pieceinfo = only(index.pieceinfos)
+    piece = Piece(io, pieceinfo)
+
+    Chunk([piece], index)
 end
 
 function Base.write(io::IO, chunk::Chunk)

@@ -22,7 +22,6 @@
 
 Feature: Writing
 
-    @wip
     Scenario: Writing a root chunk with a single piece
         Given a piece with hexadecimal contents at path "/"
             """

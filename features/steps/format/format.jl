@@ -62,6 +62,12 @@ formatfields = Dict{String, FieldVerification}(
     "piece hash in piece info 2"  => FieldVerification(index -> index.pieceinfos[2].piecehash, BytesFromHex()),
 )
 
+@given("the contents size is printed") do context
+    blob = context[:blob]
+    println("Size: $(length(blob))")
+end
+
+
 @when("reading a piece info") do context
     io = context[:io]
 
@@ -79,11 +85,11 @@ end
 end
 
 @when("writing a root chunk") do context
-    piece = context[:piece]
+    pieces = context[:pieces]
 
     io = IOBuffer()
 
-    chunk = Pokitomo.Formats.Chunk([piece])
+    chunk = Pokitomo.Formats.Chunk(pieces)
     write(io, chunk)
 
     context[:io] = io

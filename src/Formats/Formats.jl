@@ -59,11 +59,7 @@ function serializestring(path::String) :: Vector{UInt8}
     read(io)
 end
 
-function PieceInfo(p::Piece)
-    # TODO: Piece position is hard coded to zero for now.
-    # This will only work for a single piece at the start of the file.
-    pieceposition = UInt32(0)
-
+function PieceInfo(p::Piece, pieceposition::UInt32)
     piecelength = UInt32(length(p.data))
 
     # TODO: Piece type is raw binary, the only supported type for now
@@ -128,7 +124,14 @@ end
 const INDEX_POSTAMBLE_SIZE = sizeof(UInt16) + sizeof(UInt32) + SHA3_256_LENGTH + sizeof(UInt32)
 
 function Index(pieces::Vector{Piece})
-    pieceinfos = [PieceInfo(p) for p in pieces]
+    pieceinfos = PieceInfo[]
+    currentposition = 0
+    for p in pieces
+        pinfo = PieceInfo(p, UInt32(currentposition))
+        push!(pieceinfos, pinfo)
+
+        currentposition += length(p.data)
+    end
 
     # TODO: Only root index for now
     previndex = UInt32(0x80000000)

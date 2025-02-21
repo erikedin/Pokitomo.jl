@@ -56,6 +56,7 @@ end
     bin = parsecontents(hexadecimal)
 
     io = IOBuffer(bin)
+    context[:blob] = bin
     context[:io] = io
 end
 
@@ -70,7 +71,13 @@ end
 
     bin = parsecontents(hexadecimal)
 
-    context[:piece] = Pokitomo.Formats.Piece(bin, path)
+    if !haskey(context, :pieces)
+        context[:pieces] = Pokitomo.Formats.Piece[]
+    end
+
+    pieces = context[:pieces]
+    push!(pieces, Pokitomo.Formats.Piece(bin, path))
+    context[:pieces] = pieces
 end
 
 @then("the contents without the index hash is printed in Julia format") do context
@@ -85,6 +92,15 @@ end
     show(wohash)
 end
 
+function partitiontostring(collection, row, n)
+    if row <= length(collection)
+        a = collection[row]
+        bytes2hex(a)
+    else
+        repeat(' ', 2*n)
+    end
+end
+
 @then("the result in hexadecimal is") do context
     hexadecimal = context[:block_text]
     expectedbin = parsecontents(hexadecimal)
@@ -93,6 +109,28 @@ end
     seekstart(io)
 
     actual = read(io)
+
+    if actual != expectedbin
+        # Pretty print the arrays for convenience
+        println("Actual size  : $(length(actual))")
+        println("Expected size: $(length(expectedbin))")
+        println("Actual              Expected")
+
+        n = 4
+
+        actualpartition = collect(Iterators.partition(actual, n))
+        expectedpartition = collect(Iterators.partition(expectedbin, n))
+
+        row = 1
+        while row <= length(actualpartition) || row <= length(expectedpartition)
+            a = partitiontostring(actualpartition, row, n)
+            b = partitiontostring(expectedpartition, row, n)
+
+            println("$(a)    $(b)")
+
+            row += 1
+        end
+    end
 
     @expect actual == expectedbin
 end

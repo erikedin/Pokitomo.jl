@@ -95,6 +95,24 @@ end
     context[:io] = io
 end
 
+# The step reads a single piece of a file
+@when("reading the piece at path \"{String}\"") do context, path
+    io = context[:io]
+
+    seekstart(io)
+    actualdata = read(io, PokitomoFile, path)
+
+    context[:data] = actualdata
+end
+
+@then("the file contents is \"{String}\"") do context, hexadecimaldata
+    expecteddata = hex2bytes(hexadecimaldata)
+
+    actualdata = context[:data]
+
+    @test actualdata == expecteddata
+end
+
 @then("the {String} has value {String}") do context, fieldname, stringvalue
     pieceinfo = context[:object]
 

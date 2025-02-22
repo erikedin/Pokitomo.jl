@@ -243,11 +243,10 @@ end
 
 function Chunk(io::IO)
     index = Index(io)
-    # TODO: Only read a single piece for now
-    pieceinfo = only(index.pieceinfos)
-    piece = Piece(io, pieceinfo)
+    pieces = [Piece(io, pieceinfo)
+              for pieceinfo in index.pieceinfos]
 
-    Chunk([piece], index)
+    Chunk(pieces, index)
 end
 
 function Base.write(io::IO, chunk::Chunk)

@@ -88,3 +88,26 @@ Feature: Writing
             CD0B18E2AE3F0291FB041435E83502C580CE443A1DF67D645179B0845E5C7966 # Index hash
             88 00 00 00     # Index size, 46 bytes from piece info, 42 from the index
             """
+
+    Scenario Outline: Write three pieces and read them back
+        Given a piece with hexadecimal contents at path "/a"
+            """
+            2A
+            """
+          And a piece with hexadecimal contents at path "/b"
+            """
+            2B
+            """
+          And a piece with hexadecimal contents at path "/c"
+            """
+            2C
+            """
+         When writing a root chunk
+          And reading the piece at path "<path>"
+         Then the file contents is "<data>"
+
+        Examples:
+            | path | data |
+            |   /a | 2A   |
+            |   /b | 2B   |
+            |   /c | 2C   |

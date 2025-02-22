@@ -34,8 +34,13 @@ function Base.read(io::IO, ::Type{PokitomoFile}, path::String)
     # TODO: Implement more. For now, just read a single chunk.
     seekend(io)
     chunk = Chunk(io)
-    # TODO: Ignoring path for now, since there's only one piece possible.
-    piece = only(chunk.pieces)
+    # TODO: For now just read take the first piece that matches the path.
+    # Later on, we'll need to read files that are split into more than one piece.
+    pieceindex = findfirst(p -> p.path == path, chunk.pieces)
+    if pieceindex === nothing
+        throw(ArgumentError("No piece found a path $(path)"))
+    end
+    piece = chunk.pieces[pieceindex]
     piece.data
 end
 

@@ -92,7 +92,27 @@ end
     chunk = Pokitomo.Formats.Chunk(pieces)
     write(io, chunk)
 
+    # Clear the pieces list so that the next chunk written
+    # will not include these. It should only include pieces added
+    # after this write.
+    context[:pieces] = Pokitomo.Formats.Piece[]
+
     context[:io] = io
+end
+
+@when("writing a chunk") do context
+    pieces = context[:pieces]
+
+    io = context[:io]
+
+    chunk = Pokitomo.Formats.Chunk(io, pieces)
+    write(io, chunk)
+
+    # Clear the pieces list so that the next chunk written
+    # will not include these. It should only include pieces added
+    # after this write.
+    context[:pieces] = Pokitomo.Formats.Piece[]
+
 end
 
 # The step reads a single piece of a file
@@ -110,7 +130,7 @@ end
 
     actualdata = context[:data]
 
-    @test actualdata == expecteddata
+    @expect actualdata == expecteddata
 end
 
 @then("the {String} has value {String}") do context, fieldname, stringvalue

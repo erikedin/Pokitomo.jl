@@ -123,9 +123,8 @@ end
 # This size is the fixed size part of the index. It is everything following the pieceinfos.
 const INDEX_POSTAMBLE_SIZE = sizeof(UInt16) + sizeof(UInt32) + SHA3_256_LENGTH + sizeof(UInt32)
 
-function Index(pieces::Vector{Piece})
+function Index(pieces::Vector{Piece}; currentposition::UInt32 = UInt32(0), previndex::UInt32 = UInt32(0x80000000))
     pieceinfos = PieceInfo[]
-    currentposition = 0
     for p in pieces
         pinfo = PieceInfo(p, UInt32(currentposition))
         push!(pieceinfos, pinfo)
@@ -133,14 +132,20 @@ function Index(pieces::Vector{Piece})
         currentposition += length(p.data)
     end
 
-    # TODO: Only root index for now
-    previndex = UInt32(0x80000000)
-
     indexsize = UInt32(pieceinfossize(pieceinfos) + INDEX_POSTAMBLE_SIZE)
 
     hash = indexhash(pieceinfos, previndex, indexsize)
 
     Index(pieceinfos, previndex, hash, indexsize)
+end
+
+function Index(io::IO, pieces::Vector{Piece})
+    seekend(io)
+    previndex = UInt32(position(io))
+    # Note that current position and previous index differ in the
+    # special case of the first chunk. The position is 0, but the
+    # previous index has a special bit set making it 0x80000000.
+    Index(pieces; currentposition=previndex, previndex=previndex)
 end
 
 function Index(io::IO)
@@ -165,7 +170,7 @@ function Index(io::IO)
     Index(pieceinfos, pointertoprev, indexhash, indexsize)
 end
 
-isrootindex(index::Index) = true
+isrootindex(index::Index) = index.pointertoprev == 0x80000000
 numberofpieces(index::Index) = length(index.pieceinfos)
 
 function Base.write(io::IO, index::Index)
@@ -241,6 +246,11 @@ function Chunk(pieces::Vector{Piece})
     Chunk(pieces, index)
 end
 
+function Chunk(io::IO, pieces::Vector{Piece})
+    index = Index(io, pieces)
+    Chunk(pieces, index)
+end
+
 function Chunk(io::IO)
     index = Index(io)
     pieces = [Piece(io, pieceinfo)
@@ -255,5 +265,7 @@ function Base.write(io::IO, chunk::Chunk)
     end
     write(io, chunk.index)
 end
+
+isroot(c::Chunk) = isrootindex(c.index)
 
 end # module Formats

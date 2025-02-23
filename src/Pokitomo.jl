@@ -26,21 +26,53 @@ include("Formats/Formats.jl")
 
 export PokitomoFile
 
-using Pokitomo.Formats: Chunk
+using Pokitomo.Formats: Chunk, Piece, isroot
 
 struct PokitomoFile end
 
-function Base.read(io::IO, ::Type{PokitomoFile}, path::String)
-    # TODO: Implement more. For now, just read a single chunk.
+struct NoPieceFoundError <: Exception
+    path::String
+end
+
+function findpiece(chunk::Chunk, path::String) :: Union{Nothing, Piece}
+    pieceindex = findfirst(p -> p.path == path, chunk.pieces)
+    ispiecefound = pieceindex !== nothing
+
+    if ispiecefound
+        chunk.pieces[pieceindex]
+    else
+        nothing
+    end
+end
+
+function nextchunk(io::IO, chunk::Chunk) :: Chunk
+    prevchunk = chunk.index.pointertoprev
+    seek(io, prevchunk)
+    Chunk(io)
+end
+
+function findpiece(io::IO, path::String) :: Piece
     seekend(io)
     chunk = Chunk(io)
-    # TODO: For now just read take the first piece that matches the path.
-    # Later on, we'll need to read files that are split into more than one piece.
-    pieceindex = findfirst(p -> p.path == path, chunk.pieces)
-    if pieceindex === nothing
-        throw(ArgumentError("No piece found a path $(path)"))
+    morechunksavailable = true
+
+    while morechunksavailable
+        piece = findpiece(chunk, path)
+        if piece !== nothing
+            return piece
+        end
+        morechunksavailable = !isroot(chunk)
+
+        if morechunksavailable
+            chunk = nextchunk(io, chunk)
+        end
     end
-    piece = chunk.pieces[pieceindex]
+
+    throw(NoPieceFoundError(path))
+end
+
+function Base.read(io::IO, ::Type{PokitomoFile}, path::String)
+    piece = findpiece(io, path)
     piece.data
 end
 
